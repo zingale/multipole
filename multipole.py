@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
     center = (0.0, 0.0)
     radius = np.sqrt((g.r2d - center[0])**2 + (g.z2d - center[1])**2)
-    dens[radius <= 0.05] = 1.0
+    dens[radius <= 0.25] = 1.0
 
     plt.imshow(np.transpose(dens), origin="lower",
                interpolation="nearest",
