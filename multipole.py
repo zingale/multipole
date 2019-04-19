@@ -68,8 +68,8 @@ class Multipole():
 
                 # for each cell, i,j, compute r and theta (polar angle from z)
                 # and determine which shell we are in
-                r = np.sqrt((self.g.r[i] - center[0])**2 +
-                            (self.g.z[j] - center[1])**2)
+                radius = np.sqrt((self.g.r[i] - center[0])**2 +
+                                 (self.g.z[j] - center[1])**2)
 
                 theta = np.arctan2(self.g.z[j], self.g.r[i])
 
@@ -82,24 +82,53 @@ class Multipole():
                     # angle, scipy is opposite)
                     Y_lm = sph_harm(0, l, 0.0, theta)
 
-                    R_lm = np.sqrt(4*np.pi/(2*l + 1)) * r**l * Y_lm
-                    I_lm = np.sqrt(4*np.pi/(2*l + 1)) * Y_lm / r**(l+1)
+                    R_lm = np.sqrt(4*np.pi/(2*l + 1)) * radius**l * Y_lm
+                    I_lm = np.sqrt(4*np.pi/(2*l + 1)) * Y_lm / radius**(l+1)
 
                     # add to the all of the appropriate inner or outer
                     # moment functions
-                    imask = r <= self.r_bin
-                    omask = r > self.r_bin
+                    imask = radius <= self.r_bin
+                    omask = radius > self.r_bin
 
                     self.m_r[l][imask] += R_lm * m_zone
                     self.m_i[l][omask] += I_lm * m_zone
 
-    def sample_mtilde(self, r):
+    def sample_mtilde(self, l, r):
         # this returns the result of Eq. 19
-        pass
+
+        # we need to find which be we are in
+        mu_m = np.argwhere(self.r_bin <= r)[-1][0]
+        mu_p = np.argwhere(self.r_bin > r)[0][0]
+
+        assert mu_p == mu_m + 1
+
+        mtilde_r = (r - self.r_bin[mu_m])/(self.r_bin[mu_p] - self.r_bin[mu_m]) * self.m_r[l][mu_p] + \
+                   (r - self.r_bin[mu_p])/(self.r_bin[mu_m] - self.r_bin[mu_p]) * self.m_r[l][mu_m]
+
+        mtilde_i = (r - self.r_bin[mu_m])/(self.r_bin[mu_p] - self.r_bin[mu_m]) * self.m_i[l][mu_p] + \
+                   (r - self.r_bin[mu_p])/(self.r_bin[mu_m] - self.r_bin[mu_p]) * self.m_i[l][mu_m]
+
+        return mtilde_r, mtilde_i
 
     def phi(self, r, z):
         # return Phi(r), using Eq. 20
-        pass
+
+        radius = np.sqrt((self.g.r[i] - center[0])**2 +
+                         (self.g.z[j] - center[1])**2)
+
+        theta = np.arctan2(self.g.z[j], self.g.r[i])
+
+        phi_zone = 0.0
+        for l in range(self.n_moments):
+            mtilde_r, mtilde_i = self.sample_mtilde(l, radius)
+
+            Y_lm = sph_harm(0, l, 0.0, theta)
+            R_lm = np.sqrt(4*np.pi/(2*l + 1)) * radius**l * Y_lm
+            I_lm = np.sqrt(4*np.pi/(2*l + 1)) * Y_lm / radius**(l+1)
+
+            phi_zone += mtilde_r * np.conj(I_lm) + np.conj(mtilde_i) * R_lm
+
+        return -np.real(phi_zone)
 
 
 if __name__ == "__main__":
@@ -110,8 +139,36 @@ if __name__ == "__main__":
 
     center = (0.0, 0.0)
     radius = np.sqrt((g.r2d - center[0])**2 + (g.z2d - center[1])**2)
-    dens[radius <= 0.2] = 1.0
+    dens[radius <= 0.05] = 1.0
 
-    m = Multipole(g, 8, 2*g.dr, center=center)
+    plt.imshow(np.transpose(dens), origin="lower",
+               interpolation="nearest",
+               extent=[g.rlim[0], g.rlim[1],
+                       g.zlim[0], g.zlim[1]])
+
+    ax = plt.gca()
+    ax.set_aspect("equal")
+    plt.savefig("dens.png")
+
+    m = Multipole(g, 6, 3*g.dr, center=center)
     m.compute_expansion(dens)
+
+    phi = g.scratch_array()
+
+    for i in range(g.nr):
+        for j in range(g.nz):
+            phi[i,j] = m.phi(g.r[i], g.z[j])
+
+
+    plt.imshow(np.log10(np.abs(np.transpose(phi))), origin="lower",
+               interpolation="nearest",
+               extent=[g.rlim[0], g.rlim[1],
+                       g.zlim[0], g.zlim[1]])
+
+    plt.colorbar()
+    ax = plt.gca()
+    ax.set_aspect("equal")
+    plt.savefig("phi.png")
+
+
 
