@@ -16,12 +16,7 @@ class Grid():
         self.dz = (self.zlim[1] - self.zlim[0])/self.nz
 
         self.r = (np.arange(self.nr) + 0.5)*self.dr + self.rlim[0]
-        self.rl = (np.arange(self.nr))*self.dr + self.rlim[0]
-        self.rr = (np.arange(self.nr + 1.0))*self.dr + self.rlim[0]
-
         self.r2d = np.repeat(self.r, self.nz).reshape(self.nr, self.nz)
-        #self.rl2d = np.repeat(self.rl, self.nz).reshape(self.nr, self.nz)
-        #self.rr2d = np.repeat(self.rr, self.nz).reshape(self.nr, self.nz)
 
         self.z = (np.arange(self.nz) + 0.5)*self.dz + self.zlim[0]
         self.z2d = np.transpose(np.repeat(self.z, self.nr).reshape(self.nz, self.nr))
@@ -71,7 +66,8 @@ class Multipole():
                 radius = np.sqrt((self.g.r[i] - center[0])**2 +
                                  (self.g.z[j] - center[1])**2)
 
-                theta = np.arctan2(self.g.z[j], self.g.r[i])
+                # tan(theta) = r/z
+                theta = np.arctan2(self.g.r[i], self.g.z[j])
 
                 # loop over the multipole moments, l (m = 0 here)
                 m_zone = rho[i,j] * self.g.vol[i,j]
@@ -116,7 +112,8 @@ class Multipole():
         radius = np.sqrt((self.g.r[i] - center[0])**2 +
                          (self.g.z[j] - center[1])**2)
 
-        theta = np.arctan2(self.g.z[j], self.g.r[i])
+        # tan(theta) = r/z
+        theta = np.arctan2(self.g.r[i], self.g.z[j])
 
         phi_zone = 0.0
         for l in range(self.n_moments):
@@ -150,7 +147,7 @@ if __name__ == "__main__":
     ax.set_aspect("equal")
     plt.savefig("dens.png")
 
-    m = Multipole(g, 6, 3*g.dr, center=center)
+    m = Multipole(g, 4, 2*g.dr, center=center)
     m.compute_expansion(dens)
 
     phi = g.scratch_array()
