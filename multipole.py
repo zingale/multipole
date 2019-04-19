@@ -30,7 +30,7 @@ class Grid():
         self.vol = np.pi*2.0*self.r2d*self.dr*self.dz
 
     def scratch_array(self):
-        return np.zeros((nr, nz), dtype=np.float64)
+        return np.zeros((self.nr, self.nz), dtype=np.float64)
 
 class Multipole():
     def __init__(self, grid, n_moments, dr, center=(0.0, 0.0)):
@@ -49,15 +49,15 @@ class Multipole():
         self.n_bins = int(dmax/dr)
 
         # bin boundaries
-        self.r_bin = np.linspace(0.0, dmax, n_bins)
+        self.r_bin = np.linspace(0.0, dmax, self.n_bins)
 
         # storage for the inner and outer multipole moment functions
         # we'll index the list by multipole moment l
         self.m_r = []
         self.m_i = []
         for l in range(self.n_moments):
-            self.m_r.append(np.zeros((self.n_bins), dtype=np.float64))
-            self.m_i.append(np.zeros((self.n_bins), dtype=np.float64))
+            self.m_r.append(np.zeros((self.n_bins), dtype=np.complex128))
+            self.m_i.append(np.zeros((self.n_bins), dtype=np.complex128))
 
     def compute_expansion(self, rho):
         # rho is density that lives on a grid self.g
@@ -71,12 +71,12 @@ class Multipole():
                 r = np.sqrt((self.g.r[i] - center[0])**2 +
                             (self.g.z[j] - center[1])**2)
 
-                theta = np.atan(self.g.z[j], self.g.r[i])
+                theta = np.arctan2(self.g.z[j], self.g.r[i])
 
                 # loop over the multipole moments, l (m = 0 here)
                 m_zone = rho[i,j] * self.g.vol[i,j]
 
-                for l in range(n_moments):
+                for l in range(self.n_moments):
 
                     # compute Y_l^m (note: we use theta as the polar
                     # angle, scipy is opposite)
@@ -95,15 +95,23 @@ class Multipole():
 
     def sample_mtilde(self, r):
         # this returns the result of Eq. 19
-
+        pass
 
     def phi(self, r, z):
         # return Phi(r), using Eq. 20
+        pass
 
 
-g = Grid(128, 256, xlim=(0, 0.5))
+if __name__ == "__main__":
 
-p = PointMasses(g, 10)
+    g = Grid(128, 256, rlim=(0, 0.5), zlim=(-0.5, 0.5))
 
-p.plot()
+    dens = g.scratch_array()
+
+    center = (0.0, 0.0)
+    radius = np.sqrt((g.r2d - center[0])**2 + (g.z2d - center[1])**2)
+    dens[radius <= 0.2] = 1.0
+
+    m = Multipole(g, 8, 2*g.dr, center=center)
+    m.compute_expansion(dens)
 
