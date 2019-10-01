@@ -69,12 +69,16 @@ class MacLaurinSpheroid():
 
 if __name__ == "__main__":
 
+    # setup the grid
     g = Grid(128, 256, rlim=(0, 0.5), zlim=(-0.5, 0.5))
 
+    # create a MacLaurin spheriod on the grid
     ms = MacLaurinSpheroid(g, 0.25, 0.1)
 
+    # plot the density
     dens = ms.density()
 
+    plt.clf()
     plt.imshow(np.transpose(dens), origin="lower",
                interpolation="nearest",
                extent=[g.rlim[0], g.rlim[1],
@@ -84,9 +88,33 @@ if __name__ == "__main__":
     ax.set_aspect("equal")
     plt.savefig("dens.png")
 
+    # plot the analytic potential
+    phi_analytic = ms.phi()
 
-    phi = ms.phi()
+    plt.clf()
+    plt.imshow(np.log10(np.abs(np.transpose(phi_analytic))), origin="lower",
+               interpolation="nearest",
+               extent=[g.rlim[0], g.rlim[1],
+                       g.zlim[0], g.zlim[1]])
 
+    plt.colorbar()
+    ax = plt.gca()
+    ax.set_aspect("equal")
+    plt.savefig("phi_analytic.png")
+
+    # compute the multipole expansion and sample the potential
+    center = (0.0, 0.0)
+    m = Multipole(g, 12, 2*g.dr, center=center)
+    m.compute_expansion(dens)
+
+    phi = g.scratch_array()
+
+    for i in range(g.nr):
+        for j in range(g.nz):
+            phi[i,j] = m.phi(g.r[i], g.z[j])
+
+    # plot the potential
+    plt.clf()
     plt.imshow(np.log10(np.abs(np.transpose(phi))), origin="lower",
                interpolation="nearest",
                extent=[g.rlim[0], g.rlim[1],

@@ -63,8 +63,8 @@ class Multipole():
 
                 # for each cell, i,j, compute r and theta (polar angle from z)
                 # and determine which shell we are in
-                radius = np.sqrt((self.g.r[i] - center[0])**2 +
-                                 (self.g.z[j] - center[1])**2)
+                radius = np.sqrt((self.g.r[i] - self.center[0])**2 +
+                                 (self.g.z[j] - self.center[1])**2)
 
                 # tan(theta) = r/z
                 theta = np.arctan2(self.g.r[i], self.g.z[j])
@@ -109,11 +109,11 @@ class Multipole():
     def phi(self, r, z):
         # return Phi(r), using Eq. 20
 
-        radius = np.sqrt((self.g.r[i] - center[0])**2 +
-                         (self.g.z[j] - center[1])**2)
+        radius = np.sqrt((r - self.center[0])**2 +
+                         (z - self.center[1])**2)
 
         # tan(theta) = r/z
-        theta = np.arctan2(self.g.r[i], self.g.z[j])
+        theta = np.arctan2(r, z)
 
         phi_zone = 0.0
         for l in range(self.n_moments):
@@ -128,7 +128,7 @@ class Multipole():
         return -np.real(phi_zone)
 
 
-if __name__ == "__main__":
+def sphere_test():
 
     g = Grid(128, 256, rlim=(0, 0.5), zlim=(-0.5, 0.5))
 
@@ -157,6 +157,7 @@ if __name__ == "__main__":
             phi[i,j] = m.phi(g.r[i], g.z[j])
 
 
+    plt.clf()
     plt.imshow(np.log10(np.abs(np.transpose(phi))), origin="lower",
                interpolation="nearest",
                extent=[g.rlim[0], g.rlim[1],
@@ -167,5 +168,8 @@ if __name__ == "__main__":
     ax.set_aspect("equal")
     plt.savefig("phi.png")
 
+
+if __name__ == "__main__":
+    sphere_test()
 
 
