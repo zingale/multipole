@@ -59,8 +59,21 @@ class MacLaurinSpheroid():
                     continue
 
                 # we need the positive root of the lambda equation
-                lambda_const[i,j] = brentq(lambda q: self.g.r[i]**2/(self.a1**2 + q) + self.g.z[j]**2/(self.a3**2 + q) - 1.0,
-                                           0.0, self.a1)
+                def lambda_solve(q):
+                    return self.g.r[i]**2/(self.a1**2 + q) + self.g.z[j]**2/(self.a3**2 + q) - 1.0
+
+                qs = np.linspace(-0.1*self.a1, 0.1*self.a1, 1000)
+                print(qs)
+                print(lambda_solve(qs))
+                plt.clf()
+                plt.plot(qs, lambda_solve(qs))
+                plt.ylim(-10,10)
+                plt.grid()
+                plt.savefig("lambda_plot.png")
+
+                lower = -0.005
+                upper = 0.1*self.a1
+                lambda_const[i,j] = brentq(lambda_solve, lower, upper)
 
         h = self.g.scratch_array()
 
