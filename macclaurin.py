@@ -47,40 +47,23 @@ class MacLaurinSpheroid():
 
         phi = self.g.scratch_array()
 
-        # outside the spheroid
-        phi[outside] = np.pi * self.rho * (2*self.A1*self.a1**2 - self.A1*self.g.r2d[outside]**2 + self.A3*(self.a3**2 - self.g.z2d[outside]**2))
+        # inside the spheroid (Couch et al. Eq. 21)
+        phi[inside] = np.pi * self.rho * (2*self.A1*self.a1**2 - self.A1*self.g.r2d[inside]**2 + self.A3*(self.a3**2 - self.g.z2d[inside]**2))
 
-        # inside the spheroid
+        # outside the spheroid (Couch et al. Eq. 25-27)
         lambda_const = self.g.scratch_array()
 
-        for i in range(self.g.nr):
-            for j in range(self.g.nz):
-                if not inside[i,j]:
-                    continue
-
-                # we need the positive root of the lambda equation
-                def lambda_solve(q):
-                    return self.g.r[i]**2/(self.a1**2 + q) + self.g.z[j]**2/(self.a3**2 + q) - 1.0
-
-                qs = np.linspace(-0.1*self.a1, 0.1*self.a1, 1000)
-                print(qs)
-                print(lambda_solve(qs))
-                plt.clf()
-                plt.plot(qs, lambda_solve(qs))
-                plt.ylim(-10,10)
-                plt.grid()
-                plt.savefig("lambda_plot.png")
-
-                lower = -0.005
-                upper = 0.1*self.a1
-                lambda_const[i,j] = brentq(lambda_solve, lower, upper)
+        lambda_const = 0.5*(-self.a1**2 - self.a3**2 + self.g.r2d**2 + self.g.z2d**2) + \
+            0.5*np.sqrt(self.a1**4 - 2*self.a1**2*self.a3**2 - 2*self.a1**2*self.g.r2d**2 + 2*self.a1**2*self.g.z2d**2 +
+                        self.a3**4 + 2*self.a3**2*self.g.r2d**2 - 2*self.a3**2*self.g.z2d**2 +
+                        self.g.r2d**4 + 2*self.g.r2d**2*self.g.z2d**2 + self.g.z2d**4)
 
         h = self.g.scratch_array()
 
-        h[inside] =  self.a1*self.e/np.sqrt(self.a3**2 + self.lambda_const[inside])
+        h[outside] = self.a1*self.e/np.sqrt(self.a3**2 + lambda_const[outside])
 
-        phi[inside] = 2*self.a3/self.e**2 * np.pi * self.rho * (
-            self.a1*self.e*self.arctan(h[inside]) - 0.5*(self.r2d[inside]**2 * (np.arctan(h[inside]) - h[inside]/(1 + h[inside]**2)) + 2*self.z2d[inside]**2 * (h[inside] - np.arctan(h[inside]))) )
+        phi[outside] = 2*self.a3/self.e**2 * np.pi * self.rho * (
+            self.a1*self.e*np.arctan(h[outside]) - 0.5*(self.g.r2d[outside]**2 * (np.arctan(h[outside]) - h[outside]/(1 + h[outside]**2)) + 2*self.g.z2d[outside]**2 * (h[outside] - np.arctan(h[outside]))) )
 
         return phi
 
