@@ -2,9 +2,9 @@
 # analytic solution
 
 import numpy as np
-from multipole import Grid, Multipole
 import matplotlib.pyplot as plt
-from scipy.optimize import brentq
+
+from multipole import Grid, Multipole
 
 class MacLaurinSpheroid():
 
@@ -63,11 +63,11 @@ class MacLaurinSpheroid():
         h[outside] = self.a1*self.e/np.sqrt(self.a3**2 + lambda_const[outside])
 
         phi[outside] = 2*self.a3/self.e**2 * np.pi * self.rho * (
-            self.a1*self.e*np.arctan(h[outside]) - 0.5*(self.g.r2d[outside]**2 * (np.arctan(h[outside]) - h[outside]/(1 + h[outside]**2)) + 2*self.g.z2d[outside]**2 * (h[outside] - np.arctan(h[outside]))) )
+            self.a1*self.e*np.arctan(h[outside]) - 0.5*(self.g.r2d[outside]**2 * (np.arctan(h[outside]) - h[outside]/(1 + h[outside]**2)) + 2*self.g.z2d[outside]**2 * (h[outside] - np.arctan(h[outside]))))
 
         return phi
 
-if __name__ == "__main__":
+def macclaurin_test():
 
     # setup the grid
     g = Grid(128, 256, rlim=(0, 0.5), zlim=(-0.5, 0.5))
@@ -125,3 +125,6 @@ if __name__ == "__main__":
     ax.set_aspect("equal")
     plt.savefig("phi.png")
 
+
+if __name__ == "__main__":
+    macclaurin_test()

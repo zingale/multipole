@@ -50,7 +50,7 @@ class Multipole():
         # we'll index the list by multipole moment l
         self.m_r = []
         self.m_i = []
-        for l in range(self.n_moments):
+        for _ in range(self.n_moments):
             self.m_r.append(np.zeros((self.n_bins), dtype=np.complex128))
             self.m_i.append(np.zeros((self.n_bins), dtype=np.complex128))
 
@@ -70,7 +70,7 @@ class Multipole():
                 theta = np.arctan2(self.g.r[i], self.g.z[j])
 
                 # loop over the multipole moments, l (m = 0 here)
-                m_zone = rho[i,j] * self.g.vol[i,j]
+                m_zone = rho[i, j] * self.g.vol[i, j]
 
                 for l in range(self.n_moments):
 
@@ -125,7 +125,7 @@ class Multipole():
 
             phi_zone += mtilde_r * np.conj(I_lm) + np.conj(mtilde_i) * R_lm
 
-        return -np.real(phi_zone)
+        return -1.0*np.real(phi_zone)
 
 
 def sphere_test():
@@ -154,7 +154,7 @@ def sphere_test():
 
     for i in range(g.nr):
         for j in range(g.nz):
-            phi[i,j] = m.phi(g.r[i], g.z[j])
+            phi[i, j] = m.phi(g.r[i], g.z[j])
 
 
     plt.clf()
@@ -171,5 +171,3 @@ def sphere_test():
 
 if __name__ == "__main__":
     sphere_test()
-
-
